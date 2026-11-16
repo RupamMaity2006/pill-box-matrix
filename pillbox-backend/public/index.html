@@ -405,6 +405,9 @@
             <option value="30">30 min before</option>
           </select>
           <button class="btn btn-sm" id="reminderEnableBtn">Enable notifications</button>
+          <label style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none;">
+            <input type="checkbox" id="reminderSound" checked> Sound
+          </label>
           <button class="btn btn-ghost btn-sm" id="reminderTestBtn">Test</button>
         </div>
       </div>
@@ -1699,6 +1702,8 @@ function updateReminderUI(){
   const st = document.getElementById('reminderStatus');
   const btn = document.getElementById('reminderEnableBtn');
   document.getElementById('reminderLead').value = String(remindLead());
+  const snd = document.getElementById('reminderSound');
+  if(snd) snd.checked = soundOn();
   if(!('Notification' in window)){
     st.textContent = 'This browser does not support notifications.';
     btn.style.display = 'none'; return;
@@ -1714,14 +1719,72 @@ function updateReminderUI(){
     btn.style.display = 'inline-flex';
   }
 }
+const REMIND_SOUND_KEY = 'pillbox_remind_sound';
+let audioCtx = null;
+function soundOn(){
+  const v = localStorage.getItem(REMIND_SOUND_KEY);
+  return v === null ? true : (v !== '0' && v !== 'false' && v !== 'off');
+}
+function unlockAudio(){
+  try{
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) audioCtx = new AC();
+    }
+    if(audioCtx && audioCtx.state === 'suspended'){
+      audioCtx.resume();
+    }
+  }catch(_){}
+}
+['click', 'touchstart', 'keydown'].forEach(ev => {
+  document.addEventListener(ev, unlockAudio, { once: true });
+});
+function beep(freq, start, dur){
+  if(!audioCtx) return;
+  try{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, start);
+
+    const attack = Math.min(0.02, dur / 4);
+    const release = Math.min(0.03, dur / 4);
+    const t1 = start + attack;
+    const t2 = Math.max(t1, start + dur - release);
+
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(0.25, t1);
+    gain.gain.setValueAtTime(0.25, t2);
+    gain.gain.linearRampToValueAtTime(0, start + dur);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(start);
+    osc.stop(start + dur);
+  }catch(_){}
+}
+function playReminderSound(repeats = 3){
+  if(!soundOn()) return;
+  unlockAudio();
+  if(!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const count = (typeof repeats === 'number' && repeats > 0) ? repeats : 3;
+  for(let i = 0; i < count; i++){
+    const t = now + i * 1.2;
+    beep(880, t, 0.35);
+    beep(660, t + 0.35, 0.5);
+  }
+}
 async function fireNotification(title, body, tag){
-  const opts = { body, tag, requireInteraction: true, vibrate:[200,100,200] };
+  playReminderSound();
+  const opts = { body, tag, requireInteraction: true, vibrate:[200,100,200], silent: false };
   try{
     if('Notification' in window && Notification.permission === 'granted'){
       if(swReg && swReg.showNotification) await swReg.showNotification(title, opts);
       else new Notification(title, opts);
     }
-  }catch(e){ try{ new Notification(title, { body, tag }); }catch(_){} }
+  }catch(e){ try{ new Notification(title, { body, tag, silent: false }); }catch(_){} }
   showToast(`${title} — ${body}`);
 }
 function checkReminders(){
@@ -1759,6 +1822,14 @@ document.getElementById('reminderLead').addEventListener('change', e=>{
   updateReminderUI();
   showToast(`Reminder set to ${e.target.value} min before.`);
 });
+const reminderSoundEl = document.getElementById('reminderSound');
+if(reminderSoundEl){
+  reminderSoundEl.addEventListener('change', e=>{
+    const on = e.target.checked;
+    localStorage.setItem(REMIND_SOUND_KEY, on ? '1' : '0');
+    if(on) playReminderSound();
+  });
+}
 document.getElementById('reminderTestBtn').addEventListener('click', async ()=>{
   if('Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
   updateReminderUI();

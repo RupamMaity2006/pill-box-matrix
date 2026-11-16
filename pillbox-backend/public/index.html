@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pillbox — Medication Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --violet-900:#2E1065;
+    --violet-700:#4C1D95;
+    --violet-600:#6D28D9;
+    --violet-500:#7C3AED;
+    --violet-100:#EDE7FB;
+    --violet-050:#F6F3FD;
+    --bg:#F3F2F8;
+    --surface:#FFFFFF;
+    --ink:#221C35;
+    --muted:#736C87;
+    --faint:#B4ADC6;
+    --line:#E7E3F3;
+    --green:#137547;
+    --green-bg:#DFF5E8;
+    --amber:#95530A;
+    --amber-bg:#FBEAD1;
+    --red:#A4123F;
+    --red-bg:#FBE1E9;
+    --blue:#1E4FA3;
+    --blue-bg:#E2ECFB;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --shadow:0 1px 2px rgba(46,16,101,.04), 0 8px 24px -12px rgba(46,16,101,.12);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4,.brand,.stat-value{font-family:'Sora',sans-serif;}
+  a{text-decoration:none;color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  ul{margin:0;padding:0;list-style:none;}
+
+  /* ---------- Auth screen ---------- */
+  #authScreen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at top, #4C1D95, #2E1065 70%);
+    padding:20px;
+  }
+  .auth-card{
+    background:#fff;border-radius:22px;padding:34px 30px;width:100%;max-width:380px;
+    box-shadow:0 30px 70px -25px rgba(0,0,0,.5);
+  }
+  .auth-brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;margin-bottom:4px;}
+  .auth-brand .mark{
+    width:36px;height:36px;border-radius:10px;background:var(--violet-100);color:var(--violet-600);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .auth-brand .mark svg{width:20px;height:20px;}
+  .auth-sub{color:var(--muted);font-size:13.5px;margin:0 0 22px;}
+  .auth-tabs{display:flex;background:var(--bg);border-radius:11px;padding:4px;margin-bottom:20px;}
+  .auth-tab{
+    flex:1;text-align:center;padding:9px 0;border-radius:8px;border:none;background:none;
+    font-size:13.5px;font-weight:600;color:var(--muted);
+  }
+  .auth-tab.active{background:#fff;color:var(--violet-700);box-shadow:var(--shadow);}
+  .auth-form{display:none;}
+  .auth-form.active{display:block;}
+  .auth-error{
+    background:var(--red-bg);color:var(--red);font-size:12.5px;font-weight:600;
+    padding:10px 12px;border-radius:9px;margin-bottom:14px;display:none;
+  }
+  .auth-error.show{display:block;}
+  .auth-submit{width:100%;justify-content:center;margin-top:4px;}
+  .auth-foot{text-align:center;font-size:12px;color:var(--faint);margin-top:18px;}
+
+  /* ---------- Shell ---------- */
+  .shell{display:none;min-height:100vh;}
+  .shell.active{display:flex;}
+
+  .sidebar{
+    width:252px;flex-shrink:0;
+    background:linear-gradient(185deg, var(--violet-900), var(--violet-700) 72%);
+    color:#fff;padding:24px 16px 20px;display:flex;flex-direction:column;
+    position:fixed;top:0;left:0;bottom:0;z-index:40;transition:transform .25s ease;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 26px;font-size:19px;font-weight:700;letter-spacing:.2px;}
+  .brand .mark{
+    width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.14);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .brand .mark svg{width:19px;height:19px;}
+
+  .nav-group{margin-bottom:6px;}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:11px;
+    color:rgba(255,255,255,.68);font-size:14.5px;font-weight:500;cursor:pointer;margin-bottom:2px;
+    transition:background .15s ease, color .15s ease;border:none;background:none;width:100%;text-align:left;
+  }
+  .nav-item svg{width:18px;height:18px;flex-shrink:0;opacity:.9;}
+  .nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+  .nav-item.active{background:#fff;color:var(--violet-700);box-shadow:0 6px 16px -6px rgba(0,0,0,.35);}
+  .nav-item.active svg{opacity:1;}
+
+  .side-caregiver{
+    margin-top:auto;background:rgba(255,255,255,.08);border-radius:14px;padding:12px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .avatar-circle{
+    width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#C4B5FD,#7C3AED);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#2E1065;flex-shrink:0;
+  }
+  .side-caregiver .name{font-size:13.5px;font-weight:600;color:#fff;}
+  .side-caregiver .role{font-size:11.5px;color:rgba(255,255,255,.6);border:none;background:none;padding:0;cursor:pointer;}
+  .status-dot{width:7px;height:7px;border-radius:50%;background:#34D399;display:inline-block;margin-right:5px;}
+
+  .menu-toggle{
+    display:none;position:fixed;top:16px;left:16px;z-index:50;background:var(--violet-700);color:#fff;
+    border:none;width:40px;height:40px;border-radius:10px;align-items:center;justify-content:center;box-shadow:var(--shadow);
+  }
+  .menu-toggle svg{width:19px;height:19px;}
+  .scrim{display:none;position:fixed;inset:0;background:rgba(20,10,40,.4);z-index:35;}
+
+  .main{margin-left:252px;flex:1;min-width:0;padding:26px 32px 60px;}
+  .topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px;}
+  .topbar h1{margin:0 0 4px;font-size:24px;font-weight:700;}
+  .topbar p{margin:0;color:var(--muted);font-size:14px;}
+  .date-chip{
+    background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:9px 14px;
+    font-size:13px;color:var(--muted);box-shadow:var(--shadow);white-space:nowrap;
+  }
+  .date-chip strong{color:var(--ink);display:block;font-size:13.5px;}
+
+  .page{display:none;}
+  .page.active{display:block;animation:fadeIn .35s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .grid{display:grid;gap:18px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-2-1{grid-template-columns:1.55fr 1fr;}
+  .grid-2{grid-template-columns:1fr 1fr;}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px;}
+  .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+  .card-head h3{margin:0;font-size:15.5px;font-weight:700;}
+  .card-head .sub{margin:2px 0 0;font-size:12.5px;color:var(--muted);font-weight:400;}
+  .link-btn{font-size:12.5px;font-weight:600;color:var(--violet-600);border:none;background:none;padding:0;}
+  .head-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+  .stat-card{display:flex;flex-direction:column;gap:10px;}
+  .stat-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;}
+  .stat-icon svg{width:19px;height:19px;}
+  .stat-value{font-size:25px;font-weight:700;line-height:1;}
+  .stat-label{font-size:13px;color:var(--muted);font-weight:500;}
+
+  .icon-violet{background:var(--violet-100);color:var(--violet-600);}
+  .icon-amber{background:var(--amber-bg);color:var(--amber);}
+  .icon-red{background:var(--red-bg);color:var(--red);}
+  .icon-green{background:var(--green-bg);color:var(--green);}
+  .icon-blue{background:var(--blue-bg);color:var(--blue);}
+
+  .sched-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);}
+  .sched-row:last-child{border-bottom:none;}
+  .sched-time{width:64px;flex-shrink:0;font-size:13px;font-weight:700;color:var(--violet-700);}
+  .dose-dot{width:9px;height:9px;border-radius:50%;background:var(--violet-500);flex-shrink:0;}
+  .sched-info{flex:1;min-width:0;}
+  .sched-info .med{font-size:14px;font-weight:600;}
+  .sched-info .meta{font-size:12px;color:var(--muted);}
+  .row-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .pill{font-size:11px;font-weight:700;padding:5px 11px;border-radius:100px;white-space:nowrap;}
+  .pill-taken{background:var(--green-bg);color:var(--green);}
+  .pill-upcoming{background:var(--amber-bg);color:var(--amber);}
+  .pill-missed{background:var(--red-bg);color:var(--red);}
+  .pill-low{background:var(--red-bg);color:var(--red);}
+  .pill-good{background:var(--green-bg);color:var(--green);}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;background:var(--violet-600);color:#fff;border:none;
+    padding:10px 16px;border-radius:11px;font-size:13.5px;font-weight:600;box-shadow:0 8px 18px -8px rgba(109,40,217,.55);
+  }
+  .btn svg{width:15px;height:15px;}
+  .btn:hover{background:var(--violet-700);}
+  .btn:disabled{opacity:.6;cursor:default;}
+  .btn-ghost{background:var(--violet-050);color:var(--violet-700);box-shadow:none;}
+  .btn-ghost:hover{background:var(--violet-100);}
+  .btn-outline{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none;}
+  .btn-danger{background:var(--red-bg);color:var(--red);box-shadow:none;}
+  .btn-danger:hover{background:#F7C7D6;}
+  .btn-sm{padding:6px 12px;font-size:12px;border-radius:8px;}
+
+  .countdown-card{background:linear-gradient(160deg, var(--violet-700), var(--violet-500));color:#fff;border:none;}
+  .countdown-card .card-head h3{color:#fff;}
+  .countdown-card .sub{color:rgba(255,255,255,.72);}
+  .countdown-med{font-size:16px;font-weight:700;margin-bottom:2px;}
+  .countdown-meta{font-size:12.5px;color:rgba(255,255,255,.75);margin-bottom:16px;}
+  .countdown-clock{display:flex;gap:10px;margin-bottom:16px;}
+  .clock-block{background:rgba(255,255,255,.14);border-radius:11px;padding:9px 0;text-align:center;flex:1;}
+  .clock-block .num{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .clock-block .lbl{font-size:9.5px;letter-spacing:.4px;color:rgba(255,255,255,.65);margin-top:2px;}
+  .compartment-tag{
+    display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);
+    border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:600;
+  }
+
+  .donut-wrap{display:flex;align-items:center;gap:18px;}
+  .donut-pct{font-size:19px;font-weight:700;fill:var(--ink);}
+  .adherence-bars{flex:1;}
+  .abar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+  .abar-row .lbl{width:52px;font-size:11.5px;color:var(--muted);}
+  .abar-track{flex:1;height:7px;border-radius:6px;background:var(--violet-100);overflow:hidden;}
+  .abar-fill{height:100%;border-radius:6px;background:var(--violet-600);}
+  .abar-row .val{width:30px;text-align:right;font-size:11.5px;font-weight:600;color:var(--ink);}
+
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;font-size:11.5px;letter-spacing:.2px;color:var(--muted);font-weight:600;padding:0 10px 10px;border-bottom:1px solid var(--line);}
+  td{padding:13px 10px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .med-name-cell{display:flex;align-items:center;gap:10px;font-weight:600;}
+  .med-swatch{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .row-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .icon-btn{
+    width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:#fff;
+    display:inline-flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;
+  }
+  .icon-btn svg{width:14px;height:14px;}
+  .icon-btn:hover{background:var(--violet-050);color:var(--violet-600);}
+  .icon-btn.danger:hover{background:var(--red-bg);color:var(--red);}
+  .action-cell{display:flex;gap:6px;}
+
+  .alert-row{display:flex;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);align-items:flex-start;}
+  .alert-row:last-child{border-bottom:none;}
+  .alert-dot{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .alert-dot svg{width:16px;height:16px;}
+  .alert-title{font-size:13.5px;font-weight:600;}
+  .alert-desc{font-size:12.5px;color:var(--muted);margin-top:1px;}
+  .alert-time{font-size:11px;color:var(--faint);white-space:nowrap;margin-left:auto;padding-left:8px;}
+
+  .tab-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab-btn{padding:8px 15px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:600;color:var(--muted);}
+  .tab-btn.active{background:var(--violet-600);color:#fff;border-color:var(--violet-600);}
+
+  .search-input{border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-size:13.5px;width:220px;background:#fff;color:var(--ink);}
+  .search-input:focus{outline:2px solid var(--violet-500);outline-offset:1px;}
+
+  .empty-state{padding:40px 10px;text-align:center;color:var(--muted);}
+  .empty-state svg{width:40px;height:40px;color:var(--faint);margin-bottom:10px;}
+
+  .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(20,10,40,.45);align-items:center;justify-content:center;z-index:100;padding:20px;}
+  .modal-backdrop.open{display:flex;}
+  .modal{background:#fff;border-radius:18px;padding:26px;width:100%;max-width:420px;box-shadow:0 30px 60px -20px rgba(20,10,40,.4);max-height:90vh;overflow-y:auto;}
+  .modal h3{margin:0 0 4px;font-size:17px;}
+  .modal .sub{margin:0 0 18px;color:var(--muted);font-size:13px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+  .field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff;}
+  .field input:focus,.field select:focus{outline:2px solid var(--violet-500);outline-offset:1px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:20px;}
+  .modal-actions .right{display:flex;gap:10px;margin-left:auto;}
+
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+    padding:12px 20px;border-radius:11px;font-size:13.5px;box-shadow:0 12px 30px -10px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:200;display:flex;align-items:center;gap:8px;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.error{background:var(--red);}
+  .toast svg{width:16px;height:16px;color:#34D399;flex-shrink:0;}
+
+  .refill-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--violet-050);
+    border:1px dashed var(--violet-100);border-radius:14px;padding:14px 16px;margin-top:16px;
+  }
+  .refill-banner .l{display:flex;align-items:center;gap:12px;}
+  .refill-banner strong{display:block;font-size:13.5px;}
+  .refill-banner span{font-size:12px;color:var(--muted);}
+
+  @media (max-width:980px){ .grid-4{grid-template-columns:repeat(2,1fr);} .grid-2-1,.grid-2{grid-template-columns:1fr;} }
+  @media (max-width:840px){
+    .sidebar{transform:translateX(-100%);}
+    .sidebar.open{transform:translateX(0);}
+    .main{margin-left:0;padding:70px 18px 50px;}
+    .menu-toggle{display:flex;}
+    .scrim.show{display:block;}
+    .grid-4{grid-template-columns:repeat(2,1fr);}
+    .search-input{width:150px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="3.5"/><path d="M8 9v7M8 5.5a2.5 2.5 0 015 0V9"/></svg></span>
+      Pillbox
+    </div>
+    <p class="auth-sub">Sign in to manage your medications.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Log in</button>
+      <button class="auth-tab" data-tab="signup">Sign up</button>
+    </div>
+
+    <div class="auth-error" id="authError"></div>
+
+    <form class="auth-form active" id="loginForm">
+      <div class="field"><label for="loginEmail">Email</label><input id="loginEmail" type="email" required placeholder="you@example.com"></div>
+      <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" type="password" required placeholder="••••••••"></div>
+      <button type="submit" class="btn auth-submit" id="loginSubmit">Log in</button>
+    </form>
+
+    <form class="auth-form" id="signupForm">
+      <div class="field"><label for="signupName">Full name</label><input id="signupName" required placeholder="John Doe"></div>
+      <div class="field"><label for="signupEmail">Email</label><input id="signupEmail" type="email" required placeholder="you@example.com"></div>
+      <div class="field"><label for="signupPassword">Password</label><input id="signupPassword" type="password" required minlength="6" placeholder="At least 6 characters"></div>
+      <button type="submit" class="btn auth-submit" id="signupSubmit">Create account</button>
+    </form>
+
+    <p class="auth-foot">Your data is stored in your own Pillbox account and only visible to you.</p>
+  </div>
+</div>
+
+<button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+</button>
+<div class="scrim" id="scrim"></div>
+
+<div class="shell" id="shell">
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="3.5"/><path d="M8 9v7M8 5.5a2.5 2.5 0 015 0V9"/></svg></span>
+      Pillbox
+    </div>
+
+    <div class="nav-group">
+      <button class="nav-item active" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-page="medicines">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="10" rx="3"/><path d="M8 8V6a2 2 0 012-2h4a2 2 0 012 2v2M3 13h18"/></svg>
+        Medicines
+      </button>
+      <button class="nav-item" data-page="schedule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>
+        Schedule &amp; Alerts
+      </button>
+      <button class="nav-item" data-page="adherence">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M11 19V4M18 19v-7"/></svg>
+        Adherence &amp; History
+      </button>
+      <button class="nav-item" data-page="stock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7M12 11v10"/></svg>
+        Stock &amp; Prediction
+      </button>
+      <button class="nav-item" data-page="caregiver">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c.8-3.3 3.2-5 6.5-5s5.7 1.7 6.5 5M17 8.5a2.7 2.7 0 100-5.4M20 19c-.5-2.2-1.6-3.7-3.3-4.5"/></svg>
+        Caregiver
+      </button>
+      <button class="nav-item" data-page="device">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h.01"/></svg>
+        Device
+      </button>
+    </div>
+
+    <div class="side-caregiver">
+      <div class="avatar-circle" id="sideAvatar">JD</div>
+      <div>
+        <div class="name" id="sideName">—</div>
+        <button class="role" id="logoutBtn"><span class="status-dot"></span>Log out</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="page active" id="page-dashboard">
+      <div class="topbar">
+        <div><h1 id="greeting">Good evening 👋</h1><p>Here's your medication summary for today.</p></div>
+        <div class="date-chip"><strong id="today-date">—</strong><span id="today-day">—</span></div>
+      </div>
+
+      <div class="card" id="reminderCard" style="margin-bottom:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between;">
+        <div>
+          <h3 style="margin:0 0 2px;font-size:15px;">🔔 Dose reminders</h3>
+          <p class="sub" id="reminderStatus" style="margin:0;font-size:12px;color:var(--muted);">Get a notification shortly before each dose time.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label for="reminderLead" style="font-size:12px;color:var(--muted);">Remind me</label>
+          <select id="reminderLead">
+            <option value="1">1 min before</option>
+            <option value="5" selected>5 min before</option>
+            <option value="10">10 min before</option>
+            <option value="15">15 min before</option>
+            <option value="30">30 min before</option>
+          </select>
+          <button class="btn btn-sm" id="reminderEnableBtn">Enable notifications</button>
+          <button class="btn btn-ghost btn-sm" id="reminderTestBtn">Test</button>
+        </div>
+      </div>
+
+      <div class="grid grid-4" style="margin-bottom:18px;">
+        <div class="card stat-card">
+          <div class="stat-icon icon-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="10" rx="3"/><path d="M8 8V6a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></div>
+          <div><div class="stat-value"><span id="dosesTakenNum">0</span>/<span id="dosesTotalNum">0</span></div><div class="stat-label">Doses today</div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon icon-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/></svg></div>
+          <div><div class="stat-value" id="nextDoseTime">—</div><div class="stat-label" id="nextDoseLabel">Next dose</div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon icon-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.7 17a2 2 0 001.7 3h15.2a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
+          <div><div class="stat-value" id="lowStockNum">0</div><div class="stat-label">Low stock</div></div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon icon-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><div class="stat-value" id="activeAlertsNum">0</div><div class="stat-label">Active alerts</div></div>
+        </div>
+      </div>
+
+      <div class="grid grid-2-1" style="margin-bottom:18px;align-items:start;">
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Today's schedule</h3><p class="sub">Edit, remove, or mark a dose taken</p></div>
+            <div class="head-actions">
+              <button class="btn btn-ghost btn-sm" data-open-schedule-modal="add">+ Add</button>
+              <button class="link-btn" data-goto="schedule">View full schedule</button>
+            </div>
+          </div>
+          <div id="dashSchedule"></div>
+        </div>
+
+        <div class="card countdown-card">
+          <div class="card-head"><h3>Next dose</h3></div>
+          <div class="countdown-med" id="cdMedName">—</div>
+          <div class="countdown-meta" id="cdMedMeta">—</div>
+          <div class="countdown-clock">
+            <div class="clock-block"><div class="num" id="cdH">00</div><div class="lbl">HRS</div></div>
+            <div class="clock-block"><div class="num" id="cdM">00</div><div class="lbl">MIN</div></div>
+            <div class="clock-block"><div class="num" id="cdS">00</div><div class="lbl">SEC</div></div>
+          </div>
+          <div class="compartment-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 3v18M3 12h18"/></svg><span id="cdCompartmentText">—</span></div>
+        </div>
+      </div>
+
+      <div class="grid grid-2-1">
+        <div class="card">
+          <div class="card-head"><div><h3>Medication adherence</h3><p class="sub">Based on your logged history</p></div></div>
+          <div class="donut-wrap">
+            <svg width="108" height="108" viewBox="0 0 108 108">
+              <circle cx="54" cy="54" r="46" fill="none" stroke="#EDE7FB" stroke-width="12"/>
+              <circle id="donutRing" cx="54" cy="54" r="46" fill="none" stroke="#6D28D9" stroke-width="12" stroke-linecap="round"
+                stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 54 54)"/>
+              <text id="donutPctText" x="54" y="59" text-anchor="middle" class="donut-pct">0%</text>
+            </svg>
+            <div class="adherence-bars">
+              <div class="abar-row"><span class="lbl">Today</span><div class="abar-track"><div class="abar-fill" id="abarToday" style="width:0%"></div></div><span class="val" id="abarTodayVal">0%</span></div>
+              <div class="abar-row"><span class="lbl">Overall</span><div class="abar-track"><div class="abar-fill" id="abarOverall" style="width:0%"></div></div><span class="val" id="abarOverallVal">0%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Quick actions</h3></div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn" style="justify-content:center;" data-open-med-modal="add">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add medicine
+            </button>
+            <button class="btn btn-ghost" style="justify-content:center;" data-open-schedule-modal="add">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add schedule item
+            </button>
+            <button class="btn btn-ghost" style="justify-content:center;" data-goto="schedule">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/></svg>View full schedule
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MEDICINES ============ -->
+    <section class="page" id="page-medicines">
+      <div class="topbar">
+        <div><h1>Medicines</h1><p>Rename, edit, or remove any medicine and its compartment.</p></div>
+        <button class="btn" data-open-med-modal="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add medicine</button>
+      </div>
+      <div class="card">
+        <div class="tab-row" style="justify-content:space-between;">
+          <div class="tab-row" style="margin-bottom:0;">
+            <button class="tab-btn active" data-filter="all">All</button>
+            <button class="tab-btn" data-filter="low">Low stock</button>
+          </div>
+          <input class="search-input" id="medSearch" placeholder="Search medicines…">
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Medicine name</th><th>Dose</th><th>Time(s)</th><th>Compartment</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="medTableBody"></tbody></table>
+        </div>
+        <div class="empty-state" id="medEmpty" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="18" height="10" rx="3"/></svg>
+          <div>No medicines match your search.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCHEDULE & ALERTS ============ -->
+    <section class="page" id="page-schedule">
+      <div class="topbar">
+        <div><h1>Schedule &amp; alerts</h1><p>Everything due today, and anything that needs attention.</p></div>
+        <div class="date-chip"><strong id="today-date-2">—</strong><span id="today-day-2">—</span></div>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><div><h3>Today's schedule</h3></div><button class="btn btn-ghost btn-sm" data-open-schedule-modal="add">+ Add schedule item</button></div>
+          <div id="fullSchedule"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><h3>Active alerts</h3></div>
+            <div class="head-actions">
+              <button class="btn btn-ghost btn-sm" data-open-alert-modal="add">+ Add reminder</button>
+              <button class="link-btn" id="markAllRead">Mark all as read</button>
+            </div>
+          </div>
+          <div id="alertsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ADHERENCE & HISTORY ============ -->
+    <section class="page" id="page-adherence">
+      <div class="topbar"><div><h1>Adherence &amp; history</h1><p>Track your medication history and consistency.</p></div></div>
+
+      <div class="grid grid-4" style="margin-bottom:18px;">
+        <div class="card stat-card"><div class="stat-icon icon-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/></svg></div><div><div class="stat-value" id="histTotal">0</div><div class="stat-label">Total logged</div></div></div>
+        <div class="card stat-card"><div class="stat-icon icon-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div><div><div class="stat-value" id="histTaken">0</div><div class="stat-label">Taken</div></div></div>
+        <div class="card stat-card"><div class="stat-icon icon-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div><div><div class="stat-value" id="histMissed">0</div><div class="stat-label">Missed</div></div></div>
+        <div class="card stat-card"><div class="stat-icon icon-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M11 19V4M18 19v-7"/></svg></div><div><div class="stat-value" id="histPct">0%</div><div class="stat-label">Adherence</div></div></div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-head"><div><h3>Daily adherence</h3><p class="sub">Doses taken vs. logged, last 7 days</p></div></div>
+          <svg viewBox="0 0 320 170" style="width:100%;height:170px;" id="barChart"></svg>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>Adherence trend</h3><p class="sub">Last 5 days</p></div></div>
+          <svg viewBox="0 0 320 170" style="width:100%;height:170px;" id="lineChart"></svg>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>History</h3><p class="sub" style="margin:0;">Remove an entry if it was logged by mistake</p></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Date</th><th>Medicine</th><th>Scheduled time</th><th>Taken time</th><th>Status</th><th></th></tr></thead>
+          <tbody id="historyBody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STOCK & PREDICTION ============ -->
+    <section class="page" id="page-stock">
+      <div class="topbar">
+        <div><h1>Stock &amp; prediction</h1><p>Monitor stock levels and get refill predictions.</p></div>
+        <button class="btn" data-open-med-modal="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add medicine</button>
+      </div>
+
+      <div class="grid grid-4" style="margin-bottom:18px;">
+        <div class="card stat-card"><div class="stat-icon icon-violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="10" rx="3"/></svg></div><div><div class="stat-value" id="stockTotalNum">0</div><div class="stat-label">Total medicines</div></div></div>
+        <div class="card stat-card"><div class="stat-icon icon-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></div><div><div class="stat-value" id="stockLowNum">0</div><div class="stat-label">Low stock</div></div></div>
+        <div class="card stat-card"><div class="stat-icon icon-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg></div><div><div class="stat-value" id="stockOutNum">0</div><div class="stat-label">Out of stock</div></div></div>
+        <div class="card stat-card"><div class="stat-icon icon-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/></svg></div><div><div class="stat-value" id="stockAvgNum">0 days</div><div class="stat-label">Avg. days left</div></div></div>
+      </div>
+
+      <div class="grid grid-2-1">
+        <div class="card">
+          <div class="card-head"><h3>Stock overview</h3></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Medicine</th><th>Remaining</th><th>Days left</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="stockBody"></tbody></table>
+          </div>
+          <div class="refill-banner" id="refillBanner">
+            <div class="l"><div class="stat-icon icon-red" style="width:32px;height:32px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M20 6L9 17l-5-5"/></svg></div>
+              <div><strong>Recommended refill</strong><span id="refillText">—</span></div></div>
+            <button class="btn" id="refillBtn">Set refill reminder</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>Stock prediction</h3><p class="sub" id="predSub">—</p></div></div>
+          <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px;" id="predText">—</p>
+          <svg viewBox="0 0 260 170" style="width:100%;height:170px;" id="predChart"></svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CAREGIVER ============ -->
+    <section class="page" id="page-caregiver">
+      <div class="topbar">
+        <div><h1>Caregiver</h1><p>People who can view and manage this Pillbox.</p></div>
+        <button class="btn" data-open-caregiver-modal="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Invite caregiver</button>
+      </div>
+      <div class="card" id="caregiverList"></div>
+    </section>
+
+    <!-- ============ DEVICE ============ -->
+    <section class="page" id="page-device">
+      <div class="topbar"><div><h1>Device</h1><p>Connect your physical Pillbox hardware to this account.</p></div></div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-head"><div><h3>Device key</h3><p class="sub">Paste this into your ESP32 firmware so it can talk to your account.</p></div></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input class="search-input" id="deviceKeyField" style="width:340px;font-family:monospace;" readonly placeholder="No device key yet — generate one below">
+          <button class="btn btn-ghost btn-sm" id="copyDeviceKeyBtn">Copy</button>
+          <button class="btn btn-sm" id="genDeviceKeyBtn">Generate new key</button>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin:12px 0 0;">Generating a new key immediately invalidates the old one — you'll need to re-flash the device if you already gave it a key.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-head">
+          <div><h3>Bluetooth mode</h3><p class="sub">For carrying the box outside. The box keeps its own clock and schedule, and uploads what happened when you reconnect.</p></div>
+          <span class="pill pill-missed" id="bleBadge">Not connected</span>
+        </div>
+        <p id="bleStatusText" style="font-size:13.5px;color:var(--muted);margin:0 0 14px;">Turn the box on, then click Connect and pick "Pillbox" from the list.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-sm" id="bleConnectBtn">Connect via Bluetooth</button>
+          <button class="btn btn-ghost btn-sm" id="bleSyncBtn">Sync now</button>
+          <button class="btn btn-outline btn-sm" id="bleDisconnectBtn">Disconnect</button>
+          <span style="margin-left:8px;font-size:12.5px;color:var(--muted);">Test lid</span>
+          <input class="search-input" id="bleTestComp" type="number" min="1" max="8" value="1" style="width:64px;">
+          <button class="btn btn-ghost btn-sm" id="bleTestBtn">Open for 4 sec</button>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin:14px 0 0;line-height:1.6;">
+          Needs Chrome or Edge, and the dashboard opened at <code>http://localhost:4000</code> on a PC or laptop with Bluetooth.
+          After you change a medicine's time or compartment, the schedule is re-sent to the box automatically while it is connected.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>How it connects</h3></div>
+        <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin:0 0 10px;">
+          Your ESP32 sends this key in an <code>X-Device-Key</code> header on every request. It polls
+          <code>GET /api/device/state</code> every ~30 seconds to see which compartments should unlock right now
+          (based on today's schedule and each medicine's compartment number), and calls
+          <code>POST /api/device/ack</code> with <code>{ "compartment": N }</code> whenever the button on that
+          compartment is pressed — which marks the dose taken here automatically.
+        </p>
+        <p style="font-size:13.5px;color:var(--muted);line-height:1.6;margin:0;">
+          Find your PC's local IP address (Command Prompt → <code>ipconfig</code> → "IPv4 Address") and use
+          <code>http://YOUR-PC-IP:4000</code> as the server address in the firmware — not <code>localhost</code>,
+          since that would point the ESP32 at itself.
+        </p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Add/Edit medicine modal -->
+<div class="modal-backdrop" id="medModal">
+  <div class="modal">
+    <h3 id="medModalTitle">Add medicine</h3>
+    <p class="sub">This is added to your medicine list, stock overview, and today's schedule.</p>
+    <form id="medForm">
+      <div class="field"><label for="mName">Medicine name</label><input id="mName" required placeholder="e.g. Vitamin D3"></div>
+      <div class="field-row">
+        <div class="field"><label for="mDose">Dose</label><input id="mDose" required placeholder="e.g. 1 Tablet"></div>
+        <div class="field"><label for="mTime">Time</label><input id="mTime" type="time" required value="09:00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="mCompartment">Compartment</label><input id="mCompartment" type="number" min="1" max="8" required placeholder="e.g. 6"></div>
+        <div class="field"><label for="mStock">Stock (tablets)</label><input id="mStock" type="number" min="0" required placeholder="e.g. 30"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="medDeleteBtn" style="display:none;">Remove medicine</button>
+        <div class="right">
+          <button type="button" class="btn btn-outline" data-close="medModal">Cancel</button>
+          <button type="submit" class="btn" id="medSubmitBtn">Add medicine</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add/Edit schedule modal -->
+<div class="modal-backdrop" id="scheduleModal">
+  <div class="modal">
+    <h3 id="scheduleModalTitle">Add schedule item</h3>
+    <p class="sub">Set which medicine to take and when.</p>
+    <form id="scheduleForm">
+      <div class="field"><label for="sMedicine">Medicine</label><select id="sMedicine" required></select></div>
+      <div class="field-row">
+        <div class="field"><label for="sTime">Time</label><input id="sTime" type="time" required value="09:00"></div>
+        <div class="field"><label for="sInstruction">Instruction</label><input id="sInstruction" required placeholder="e.g. After food"></div>
+      </div>
+      <div class="field">
+        <label for="sStatus">Status</label>
+        <select id="sStatus"><option value="upcoming">Upcoming</option><option value="taken">Taken</option><option value="missed">Missed</option></select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="scheduleDeleteBtn" style="display:none;">Remove item</button>
+        <div class="right">
+          <button type="button" class="btn btn-outline" data-close="scheduleModal">Cancel</button>
+          <button type="submit" class="btn" id="scheduleSubmitBtn">Add to schedule</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add alert modal -->
+<div class="modal-backdrop" id="alertModal">
+  <div class="modal">
+    <h3>Add reminder</h3>
+    <p class="sub">Create a custom reminder or alert.</p>
+    <form id="alertForm">
+      <div class="field"><label for="aTitle">Title</label><input id="aTitle" required placeholder="e.g. Doctor's appointment"></div>
+      <div class="field"><label for="aDesc">Description</label><input id="aDesc" required placeholder="e.g. Follow-up at 5:00 PM today"></div>
+      <div class="field">
+        <label for="aType">Type</label>
+        <select id="aType"><option value="blue">Reminder</option><option value="amber">Warning</option><option value="red">Critical</option></select>
+      </div>
+      <div class="modal-actions"><div class="right">
+        <button type="button" class="btn btn-outline" data-close="alertModal">Cancel</button>
+        <button type="submit" class="btn">Add reminder</button>
+      </div></div>
+    </form>
+  </div>
+</div>
+
+<!-- Add caregiver modal -->
+<div class="modal-backdrop" id="caregiverModal">
+  <div class="modal">
+    <h3>Invite caregiver</h3>
+    <p class="sub">They'll be able to view schedules and receive alerts.</p>
+    <form id="caregiverForm">
+      <div class="field"><label for="cName">Name</label><input id="cName" required placeholder="e.g. Anita Karmakar"></div>
+      <div class="field"><label for="cRelation">Relation / role</label><input id="cRelation" required placeholder="e.g. Daughter"></div>
+      <div class="field">
+        <label for="cNotify">Notify by</label>
+        <select id="cNotify"><option value="SMS">SMS</option><option value="Email">Email</option><option value="App notification">App notification</option></select>
+      </div>
+      <div class="modal-actions"><div class="right">
+        <button type="button" class="btn btn-outline" data-close="caregiverModal">Cancel</button>
+        <button type="submit" class="btn">Send invite</button>
+      </div></div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+  <span id="toastMsg">Saved.</span>
+</div>
+
+<script>
+/* =====================================================================
+   API layer — every write goes to the real backend at /api/*.
+   ===================================================================== */
+const API = '';
+let token = localStorage.getItem('pillbox_token') || null;
+let currentUser = null;
+
+function authHeaders(hasBody){
+  const h = {};
+  if(token) h['Authorization'] = 'Bearer ' + token;
+  if(hasBody) h['Content-Type'] = 'application/json';
+  return h;
+}
+async function apiFetch(path, opts={}){
+  const res = await fetch(API + path, { ...opts, headers: { ...authHeaders(!!opts.body), ...(opts.headers||{}) } });
+  if(res.status === 401){ doLogout(); throw new Error('Session expired — please log in again.'); }
+  if(!res.ok){
+    let msg = 'Request failed';
+    try{ msg = (await res.json()).error || msg; }catch(e){}
+    throw new Error(msg);
+  }
+  if(res.status === 204) return null;
+  return res.json();
+}
+
+/* ---------------- Local, mapped copies of server data ---------------- */
+const swatches = ['#7C3AED','#DB2777','#0EA5E9','#F59E0B','#16A34A','#EF4444'];
+let medicines = [];
+let schedule = [];
+let alerts = [];
+let history = [];
+let caregivers = [];
+
+function mapMedicine(m){ return { id:m.id, name:m.name, dose:m.dose, time:m.time, compartment:m.compartment, stock:m.stock, daysLeft:m.days_left, status:m.status }; }
+function mapSchedule(s){ return { id:s.id, medicineId:s.medicine_id, med:s.med_name, dose:s.dose, time:s.time, meta:s.instruction, status:s.status }; }
+function mapAlert(a){ return { id:a.id, type:a.type, title:a.title, desc:a.description, time:a.created_at }; }
+function mapHistory(h){ return { id:h.id, date:h.log_date, med:h.medicine_name, sched:h.scheduled_at, taken:h.taken_at || '—', status:h.status }; }
+function mapCaregiver(c){ return { id:c.id, name:c.name, relation:c.relation, notify:c.notify_via, removable: !!c.removable, status:c.status }; }
+
+function to12h(t){ // "HH:MM" 24h -> "H:MM AM/PM"
+  if(!t) return '—';
+  let [hh,mm] = t.split(':').map(Number);
+  const ampm = hh>=12 ? 'PM':'AM';
+  const hh12 = ((hh+11)%12)+1;
+  return `${hh12}:${String(mm).padStart(2,'0')} ${ampm}`;
+}
+function friendlyTime(ts){
+  // created_at from the server is 'YYYY-MM-DD HH:MM:SS' — show just HH:MM in 12h form
+  if(!ts) return '—';
+  const parts = ts.split(' ');
+  const timePart = parts[1] ? parts[1].slice(0,5) : ts.slice(0,5);
+  return to12h(timePart);
+}
+
+/* =====================================================================
+   Auth screen
+   ===================================================================== */
+const authScreen = document.getElementById('authScreen');
+const shell = document.getElementById('shell');
+const authError = document.getElementById('authError');
+
+document.querySelectorAll('.auth-tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.auth-tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.auth-form').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.tab+'Form').classList.add('active');
+  authError.classList.remove('show');
+}));
+
+function showAuthError(msg){ authError.textContent = msg; authError.classList.add('show'); }
+
+document.getElementById('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  authError.classList.remove('show');
+  const btn = document.getElementById('loginSubmit');
+  btn.disabled = true; btn.textContent = 'Logging in…';
+  try{
+    const res = await fetch('/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email: document.getElementById('loginEmail').value.trim(), password: document.getElementById('loginPassword').value })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Login failed');
+    token = data.token; currentUser = data.user;
+    localStorage.setItem('pillbox_token', token);
+    enterApp();
+  }catch(err){ showAuthError(err.message); }
+  finally{ btn.disabled = false; btn.textContent = 'Log in'; }
+});
+
+document.getElementById('signupForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  authError.classList.remove('show');
+  const btn = document.getElementById('signupSubmit');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  try{
+    const res = await fetch('/api/auth/signup', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name: document.getElementById('signupName').value.trim(),
+        email: document.getElementById('signupEmail').value.trim(),
+        password: document.getElementById('signupPassword').value
+      })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'Sign up failed');
+    token = data.token; currentUser = data.user;
+    localStorage.setItem('pillbox_token', token);
+    enterApp();
+  }catch(err){ showAuthError(err.message); }
+  finally{ btn.disabled = false; btn.textContent = 'Create account'; }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', doLogout);
+function doLogout(){
+  token = null; currentUser = null;
+  localStorage.removeItem('pillbox_token');
+  shell.classList.remove('active');
+  authScreen.style.display = 'flex';
+}
+
+async function enterApp(){
+  authScreen.style.display = 'none';
+  shell.classList.add('active');
+  document.getElementById('sideName').textContent = currentUser.name;
+  document.getElementById('sideAvatar').textContent = currentUser.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  document.getElementById('greeting').textContent = greetingFor(currentUser.name);
+  await loadAll();
+  startCountdownLoop();
+}
+function greetingFor(name){
+  const h = new Date().getHours();
+  const part = h<12?'morning':h<17?'afternoon':'evening';
+  const first = name.split(' ')[0];
+  return `Good ${part}, ${first} 👋`;
+}
+
+/* Try to resume a session on page load */
+(async function init(){
+  renderDate();
+  if(token){
+    try{
+      const data = await apiFetch('/api/auth/me');
+      currentUser = data.user;
+      await enterApp();
+      return;
+    }catch(e){ /* token invalid/expired — fall through to login screen */ }
+  }
+  authScreen.style.display = 'flex';
+})();
+
+/* ---------------- Nav ---------------- */
+const navItems = document.querySelectorAll('.nav-item');
+const pages = document.querySelectorAll('.page');
+function goToPage(name){
+  navItems.forEach(n=>n.classList.toggle('active', n.dataset.page===name));
+  pages.forEach(p=>p.classList.toggle('active', p.id === 'page-'+name));
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('scrim').classList.remove('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+navItems.forEach(n=>n.addEventListener('click',()=>goToPage(n.dataset.page)));
+document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>goToPage(b.dataset.goto)));
+
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.getElementById('sidebar');
+const scrim = document.getElementById('scrim');
+menuToggle.addEventListener('click',()=>{sidebar.classList.add('open');scrim.classList.add('show');});
+scrim.addEventListener('click',()=>{sidebar.classList.remove('open');scrim.classList.remove('show');});
+
+function renderDate(){
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US',{day:'2-digit',month:'short',year:'numeric'});
+  const dayStr = now.toLocaleDateString('en-US',{weekday:'long'});
+  document.getElementById('today-date').textContent = dateStr;
+  document.getElementById('today-day').textContent = dayStr;
+  document.getElementById('today-date-2').textContent = dateStr;
+  document.getElementById('today-day-2').textContent = dayStr;
+}
+
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'),2800);
+}
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) closeModal(m.id); }));
+
+const editIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+const trashIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>';
+
+/* =====================================================================
+   Load everything from the API
+   ===================================================================== */
+async function loadAll(){
+  try{
+    const [medRes, schedRes, alertRes, histRes, careRes] = await Promise.all([
+      apiFetch('/api/medicines'),
+      apiFetch('/api/schedule'),
+      apiFetch('/api/alerts'),
+      apiFetch('/api/history?limit=200'),
+      apiFetch('/api/caregivers'),
+    ]);
+    medicines = medRes.map(mapMedicine);
+    schedule = schedRes.map(mapSchedule);
+    alerts = alertRes.map(mapAlert);
+    history = histRes.map(mapHistory);
+    caregivers = careRes.map(mapCaregiver);
+    renderAll();
+    if(typeof checkReminders==='function') checkReminders();
+  }catch(err){
+    showToast(err.message, true);
+  }
+}
+
+/* ================= MEDICINES ================= */
+let medEditingId = null;
+function openMedModal(mode, id){
+  medEditingId = id ?? null;
+  const form = document.getElementById('medForm');
+  form.reset();
+  document.getElementById('medDeleteBtn').style.display = mode==='edit' ? 'inline-flex':'none';
+  document.getElementById('medModalTitle').textContent = mode==='edit' ? 'Edit medicine':'Add medicine';
+  document.getElementById('medSubmitBtn').textContent = mode==='edit' ? 'Save changes':'Add medicine';
+  if(mode==='edit'){
+    const m = medicines.find(x=>x.id===id);
+    document.getElementById('mName').value = m.name;
+    document.getElementById('mDose').value = m.dose;
+    document.getElementById('mCompartment').value = m.compartment;
+    document.getElementById('mStock').value = m.stock;
+    document.getElementById('mTime').value = m.time; // already 24h HH:MM
+  } else {
+    document.getElementById('mTime').value = '09:00';
+  }
+  openModal('medModal');
+}
+document.querySelectorAll('[data-open-med-modal]').forEach(b=>b.addEventListener('click',()=>openMedModal('add')));
+
+document.getElementById('medForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const payload = {
+    name: document.getElementById('mName').value.trim(),
+    dose: document.getElementById('mDose').value.trim(),
+    time: document.getElementById('mTime').value,
+    compartment: +document.getElementById('mCompartment').value,
+    stock: +document.getElementById('mStock').value,
+  };
+  const btn = document.getElementById('medSubmitBtn');
+  btn.disabled = true;
+  try{
+    if(medEditingId){
+      await apiFetch(`/api/medicines/${medEditingId}`, { method:'PUT', body: JSON.stringify(payload) });
+      showToast(`${payload.name} updated.`);
+    } else {
+      await apiFetch('/api/medicines', { method:'POST', body: JSON.stringify(payload) });
+      showToast(`${payload.name} added to your medicines.`);
+    }
+    closeModal('medModal');
+    await loadAll();
+  }catch(err){ showToast(err.message, true); }
+  finally{ btn.disabled = false; }
+});
+document.getElementById('medDeleteBtn').addEventListener('click', async ()=>{
+  if(!medEditingId) return;
+  const m = medicines.find(x=>x.id===medEditingId);
+  if(!confirm(`Remove ${m.name}? This also removes it from today's schedule.`)) return;
+  try{
+    await apiFetch(`/api/medicines/${medEditingId}`, { method:'DELETE' });
+    showToast(`${m.name} removed.`);
+    closeModal('medModal');
+    await loadAll();
+  }catch(err){ showToast(err.message, true); }
+});
+
+function statusPillStock(status){ return status==='low' ? '<span class="pill pill-low">Low stock</span>' : '<span class="pill pill-good">Good</span>'; }
+function renderMedicines(){
+  const search = document.getElementById('medSearch').value.toLowerCase();
+  const filter = document.querySelector('#page-medicines .tab-btn.active').dataset.filter;
+  let list = medicines.filter(m=>m.name.toLowerCase().includes(search));
+  if(filter==='low') list = list.filter(m=>m.status==='low');
+  const body = document.getElementById('medTableBody');
+  document.getElementById('medEmpty').style.display = list.length? 'none':'block';
+  body.innerHTML = list.map(m=>`
+    <tr>
+      <td><div class="med-name-cell"><span class="med-swatch" style="background:${swatches[m.id % swatches.length]}"></span>${m.name}</div></td>
+      <td>${m.dose}</td><td>${to12h(m.time)}</td><td>${m.compartment}</td>
+      <td>${m.stock} tablets<div class="row-sub">${m.daysLeft} days left</div></td>
+      <td>${statusPillStock(m.status)}</td>
+      <td><div class="action-cell">
+        <button class="icon-btn" data-edit-med="${m.id}" aria-label="Edit ${m.name}">${editIcon}</button>
+        <button class="icon-btn danger" data-delete-med="${m.id}" aria-label="Remove ${m.name}">${trashIcon}</button>
+      </div></td>
+    </tr>`).join('');
+  body.querySelectorAll('[data-edit-med]').forEach(b=>b.addEventListener('click',()=>openMedModal('edit', +b.dataset.editMed)));
+  body.querySelectorAll('[data-delete-med]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = +b.dataset.deleteMed;
+    const m = medicines.find(x=>x.id===id);
+    if(!confirm(`Remove ${m.name}? This also removes it from today's schedule.`)) return;
+    try{ await apiFetch(`/api/medicines/${id}`, { method:'DELETE' }); showToast(`${m.name} removed.`); await loadAll(); }
+    catch(err){ showToast(err.message, true); }
+  }));
+}
+document.getElementById('medSearch').addEventListener('input', renderMedicines);
+document.querySelectorAll('#page-medicines .tab-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#page-medicines .tab-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  renderMedicines();
+}));
+
+/* ================= SCHEDULE ================= */
+let schedEditingId = null;
+function populateMedicineSelect(){
+  const sel = document.getElementById('sMedicine');
+  sel.innerHTML = medicines.map(m=>`<option value="${m.id}" data-name="${m.name}" data-dose="${m.dose}">${m.name}</option>`).join('');
+}
+function openScheduleModal(mode, id){
+  schedEditingId = id ?? null;
+  populateMedicineSelect();
+  const form = document.getElementById('scheduleForm');
+  form.reset();
+  document.getElementById('scheduleDeleteBtn').style.display = mode==='edit' ? 'inline-flex':'none';
+  document.getElementById('scheduleModalTitle').textContent = mode==='edit' ? 'Edit schedule item':'Add schedule item';
+  document.getElementById('scheduleSubmitBtn').textContent = mode==='edit' ? 'Save changes':'Add to schedule';
+  if(mode==='edit'){
+    const s = schedule.find(x=>x.id===id);
+    if(s.medicineId) document.getElementById('sMedicine').value = s.medicineId;
+    document.getElementById('sInstruction').value = s.meta;
+    document.getElementById('sStatus').value = s.status;
+    document.getElementById('sTime').value = s.time;
+  } else {
+    document.getElementById('sTime').value = '09:00';
+    document.getElementById('sInstruction').value = 'As directed';
+  }
+  openModal('scheduleModal');
+}
+document.querySelectorAll('[data-open-schedule-modal]').forEach(b=>b.addEventListener('click',()=>{
+  if(medicines.length===0){ showToast('Add a medicine first.', true); return; }
+  openScheduleModal('add');
+}));
+
+document.getElementById('scheduleForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const sel = document.getElementById('sMedicine');
+  const opt = sel.selectedOptions[0];
+  const payload = {
+    medicineId: +sel.value,
+    medName: opt.dataset.name,
+    dose: opt.dataset.dose,
+    time: document.getElementById('sTime').value,
+    instruction: document.getElementById('sInstruction').value.trim(),
+    status: document.getElementById('sStatus').value,
+  };
+  const btn = document.getElementById('scheduleSubmitBtn');
+  btn.disabled = true;
+  try{
+    if(schedEditingId){
+      await apiFetch(`/api/schedule/${schedEditingId}`, { method:'PUT', body: JSON.stringify(payload) });
+      showToast('Schedule item updated.');
+    } else {
+      await apiFetch('/api/schedule', { method:'POST', body: JSON.stringify(payload) });
+      showToast("Added to today's schedule.");
+    }
+    closeModal('scheduleModal');
+    await loadAll();
+  }catch(err){ showToast(err.message, true); }
+  finally{ btn.disabled = false; }
+});
+document.getElementById('scheduleDeleteBtn').addEventListener('click', async ()=>{
+  if(!schedEditingId) return;
+  if(!confirm('Remove this schedule item?')) return;
+  try{
+    await apiFetch(`/api/schedule/${schedEditingId}`, { method:'DELETE' });
+    showToast('Schedule item removed.');
+    closeModal('scheduleModal');
+    await loadAll();
+  }catch(err){ showToast(err.message, true); }
+});
+
+function statusPillHtml(status){
+  if(status==='taken') return '<span class="pill pill-taken">Taken</span>';
+  if(status==='missed') return '<span class="pill pill-missed">Missed</span>';
+  return '<span class="pill pill-upcoming">Upcoming</span>';
+}
+function renderSchedule(){
+  const rows = schedule.slice().sort((a,b)=>a.time.localeCompare(b.time)).map(s=>`
+    <div class="sched-row">
+      <div class="sched-time">${to12h(s.time)}</div>
+      <span class="dose-dot"></span>
+      <div class="sched-info"><div class="med">${s.med}</div><div class="meta">${s.dose} · ${s.meta}</div></div>
+      ${statusPillHtml(s.status)}
+      <div class="row-actions">
+        ${s.status==='upcoming' ? `<button class="btn btn-ghost btn-sm" data-take="${s.id}">Mark taken</button>` : ''}
+        <button class="icon-btn" data-edit-sched="${s.id}" aria-label="Edit">${editIcon}</button>
+        <button class="icon-btn danger" data-delete-sched="${s.id}" aria-label="Remove">${trashIcon}</button>
+      </div>
+    </div>`).join('') || `<div class="empty-state"><div>No doses scheduled. Add one to get started.</div></div>`;
+  document.getElementById('dashSchedule').innerHTML = rows;
+  document.getElementById('fullSchedule').innerHTML = rows;
+
+  document.querySelectorAll('[data-take]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = +b.dataset.take;
+    const s = schedule.find(x=>x.id===id);
+    try{
+      await apiFetch(`/api/schedule/${id}`, { method:'PUT', body: JSON.stringify({ status:'taken' }) });
+      showToast(`${s.med} marked as taken.`);
+      await loadAll();
+    }catch(err){ showToast(err.message, true); }
+  }));
+  document.querySelectorAll('[data-edit-sched]').forEach(b=>b.addEventListener('click',()=>openScheduleModal('edit', +b.dataset.editSched)));
+  document.querySelectorAll('[data-delete-sched]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = +b.dataset.deleteSched;
+    if(!confirm('Remove this schedule item?')) return;
+    try{ await apiFetch(`/api/schedule/${id}`, { method:'DELETE' }); showToast('Schedule item removed.'); await loadAll(); }
+    catch(err){ showToast(err.message, true); }
+  }));
+}
+
+let nextDoseTarget = null; // Date object the countdown counts down to
+function updateDoseStat(){
+  const taken = schedule.filter(s=>s.status==='taken').length;
+  document.getElementById('dosesTakenNum').textContent = taken;
+  document.getElementById('dosesTotalNum').textContent = schedule.length;
+
+  const upcoming = schedule.filter(s=>s.status==='upcoming').sort((a,b)=>a.time.localeCompare(b.time))[0];
+  if(upcoming){
+    document.getElementById('nextDoseTime').textContent = to12h(upcoming.time);
+    document.getElementById('nextDoseLabel').textContent = `Next dose · ${upcoming.med}`;
+    document.getElementById('cdMedName').textContent = upcoming.med;
+    document.getElementById('cdMedMeta').textContent = `${upcoming.dose} · ${upcoming.meta}`;
+    const m = medicines.find(x=>x.id===upcoming.medicineId) || medicines.find(x=>x.name===upcoming.med);
+    document.getElementById('cdCompartmentText').textContent = 'Compartment ' + (m ? m.compartment : '—');
+
+    const [hh,mm] = upcoming.time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(hh, mm, 0, 0);
+    if(target < new Date()) target.setDate(target.getDate()+1); // already passed today -> tomorrow
+    nextDoseTarget = target;
+  } else {
+    document.getElementById('nextDoseTime').textContent = '—';
+    document.getElementById('nextDoseLabel').textContent = 'No upcoming doses';
+    document.getElementById('cdMedName').textContent = 'All caught up';
+    document.getElementById('cdMedMeta').textContent = 'No doses left today';
+    document.getElementById('cdCompartmentText').textContent = '—';
+    nextDoseTarget = null;
+  }
+}
+let countdownInterval = null;
+function startCountdownLoop(){
+  if(countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(()=>{
+    if(!nextDoseTarget){ document.getElementById('cdH').textContent='00'; document.getElementById('cdM').textContent='00'; document.getElementById('cdS').textContent='00'; return; }
+    const diff = Math.max(0, Math.floor((nextDoseTarget - new Date())/1000));
+    const h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60;
+    document.getElementById('cdH').textContent = String(h).padStart(2,'0');
+    document.getElementById('cdM').textContent = String(m).padStart(2,'0');
+    document.getElementById('cdS').textContent = String(s).padStart(2,'0');
+  },1000);
+}
+
+/* ================= ALERTS ================= */
+const alertIcon = {
+  red:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.7 17a2 2 0 001.7 3h15.2a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>',
+  amber:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/></svg>',
+  blue:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>'
+};
+const alertBg = {red:'icon-red',amber:'icon-amber',blue:'icon-blue'};
+function renderAlerts(){
+  document.getElementById('activeAlertsNum').textContent = alerts.length;
+  if(alerts.length===0){
+    document.getElementById('alertsList').innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 6L9 17l-5-5"/></svg>
+      <div>You're all caught up — no active alerts.</div></div>`;
+    return;
+  }
+  document.getElementById('alertsList').innerHTML = alerts.map(a=>`
+    <div class="alert-row">
+      <div class="alert-dot ${alertBg[a.type]}">${alertIcon[a.type]}</div>
+      <div style="flex:1;min-width:0;"><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div></div>
+      <div class="alert-time">${friendlyTime(a.time)}</div>
+      <button class="icon-btn danger" data-delete-alert="${a.id}" aria-label="Dismiss">${trashIcon}</button>
+    </div>`).join('');
+  document.querySelectorAll('[data-delete-alert]').forEach(b=>b.addEventListener('click', async ()=>{
+    try{ await apiFetch(`/api/alerts/${b.dataset.deleteAlert}`, { method:'DELETE' }); showToast('Alert dismissed.'); await loadAll(); }
+    catch(err){ showToast(err.message, true); }
+  }));
+}
+document.getElementById('markAllRead').addEventListener('click', async ()=>{
+  try{ await apiFetch('/api/alerts', { method:'DELETE' }); showToast('All alerts cleared.'); await loadAll(); }
+  catch(err){ showToast(err.message, true); }
+});
+document.querySelectorAll('[data-open-alert-modal]').forEach(b=>b.addEventListener('click',()=>{
+  document.getElementById('alertForm').reset();
+  openModal('alertModal');
+}));
+document.getElementById('alertForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const payload = {
+    title: document.getElementById('aTitle').value.trim(),
+    description: document.getElementById('aDesc').value.trim(),
+    type: document.getElementById('aType').value,
+  };
+  try{
+    await apiFetch('/api/alerts', { method:'POST', body: JSON.stringify(payload) });
+    showToast('Reminder added.');
+    closeModal('alertModal');
+    await loadAll();
+  }catch(err){ showToast(err.message, true); }
+});
+
+/* ================= STOCK ================= */
+function renderStock(){
+  document.getElementById('stockBody').innerHTML = medicines.map(m=>`
+    <tr>
+      <td><div class="med-name-cell"><span class="med-swatch" style="background:${swatches[m.id % swatches.length]}"></span>${m.name}</div></td>
+      <td>${m.stock} Tablets</td><td>${m.daysLeft} Days</td><td>${statusPillStock(m.status)}</td>
+      <td><div class="action-cell">
+        <button class="icon-btn" data-edit-stock="${m.id}" aria-label="Edit ${m.name}">${editIcon}</button>
+        <button class="icon-btn danger" data-delete-stock="${m.id}" aria-label="Remove ${m.name}">${trashIcon}</button>
+      </div></td>
+    </tr>`).join('');
+  document.querySelectorAll('[data-edit-stock]').forEach(b=>b.addEventListener('click',()=>openMedModal('edit', +b.dataset.editStock)));
+  document.querySelectorAll('[data-delete-stock]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = +b.dataset.deleteStock;
+    const m = medicines.find(x=>x.id===id);
+    if(!confirm(`Remove ${m.name}?`)) return;
+    try{ await apiFetch(`/api/medicines/${id}`, { method:'DELETE' }); showToast(`${m.name} removed.`); await loadAll(); }
+    catch(err){ showToast(err.message, true); }
+  }));
+
+  document.getElementById('stockTotalNum').textContent = medicines.length;
+  const low = medicines.filter(m=>m.status==='low');
+  document.getElementById('stockLowNum').textContent = low.length;
+  document.getElementById('stockOutNum').textContent = medicines.filter(m=>m.stock<=0).length;
+  const avg = medicines.length ? Math.round(medicines.reduce((a,m)=>a+m.daysLeft,0)/medicines.length) : 0;
+  document.getElementById('stockAvgNum').textContent = avg + ' days';
+
+  const worst = low.slice().sort((a,b)=>a.daysLeft-b.daysLeft)[0];
+  const banner = document.getElementById('refillBanner');
+  if(worst){
+    banner.style.display='flex';
+    document.getElementById('refillText').textContent = `${worst.name} · ${worst.stock} tablets left`;
+    document.getElementById('predSub').textContent = worst.name;
+    document.getElementById('predText').textContent = `Predicted to run out in ${worst.daysLeft} days.`;
+    buildPredChart(worst);
+  } else {
+    banner.style.display='none';
+    document.getElementById('predSub').textContent = 'No medicines low on stock';
+    document.getElementById('predText').textContent = 'All stock levels look healthy right now.';
+    document.getElementById('predChart').innerHTML = '';
+  }
+}
+document.getElementById('refillBtn').addEventListener('click', ()=>showToast('Refill reminder set.'));
+
+/* ================= HISTORY & ADHERENCE STATS ================= */
+function renderHistory(){
+  document.getElementById('historyBody').innerHTML = history.map(h=>`
+    <tr>
+      <td>${h.date}</td><td>${h.med}</td><td>${to12h(h.sched)}</td><td>${h.taken==='—'?'—':to12h(h.taken)}</td><td>${statusPillHtml(h.status)}</td>
+      <td><button class="icon-btn danger" data-delete-history="${h.id}" aria-label="Remove entry">${trashIcon}</button></td>
+    </tr>`).join('') || `<tr><td colspan="6"><div class="empty-state">No history yet — mark a dose taken to start building your log.</div></td></tr>`;
+  document.querySelectorAll('[data-delete-history]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Remove this history entry?')) return;
+    try{ await apiFetch(`/api/history/${b.dataset.deleteHistory}`, { method:'DELETE' }); showToast('History entry removed.'); await loadAll(); }
+    catch(err){ showToast(err.message, true); }
+  }));
+
+  const total = history.length;
+  const taken = history.filter(h=>h.status==='taken').length;
+  const missed = history.filter(h=>h.status==='missed').length;
+  const pct = total ? Math.round((taken/total)*100) : 0;
+  document.getElementById('histTotal').textContent = total;
+  document.getElementById('histTaken').textContent = taken;
+  document.getElementById('histMissed').textContent = missed;
+  document.getElementById('histPct').textContent = pct + '%';
+
+  // Dashboard donut + bars
+  const today = new Date().toISOString().slice(0,10);
+  const todayRows = history.filter(h=>h.date===today);
+  const todayPct = todayRows.length ? Math.round((todayRows.filter(h=>h.status==='taken').length/todayRows.length)*100) : 0;
+  document.getElementById('donutPctText').textContent = pct + '%';
+  const ring = document.getElementById('donutRing');
+  const circumference = 2*Math.PI*46;
+  ring.setAttribute('stroke-dasharray', circumference.toFixed(1));
+  ring.setAttribute('stroke-dashoffset', (circumference*(1-pct/100)).toFixed(1));
+  document.getElementById('abarToday').style.width = todayPct+'%';
+  document.getElementById('abarTodayVal').textContent = todayPct+'%';
+  document.getElementById('abarOverall').style.width = pct+'%';
+  document.getElementById('abarOverallVal').textContent = pct+'%';
+
+  buildDailyCharts();
+}
+
+/* ================= CAREGIVER ================= */
+function renderCaregivers(){
+  document.getElementById('caregiverList').innerHTML = caregivers.map((c,i)=>`
+    <div class="sched-row" style="padding:14px 4px;">
+      <div class="avatar-circle" style="width:44px;height:44px;font-size:15px;${i%2? 'background:linear-gradient(135deg,#FBCFE8,#DB2777);':''}">${c.name.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+      <div class="sched-info"><div class="med">${c.name}</div><div class="meta">${c.relation}</div></div>
+      <span class="pill ${c.status==='Active'?'pill-taken':'pill-upcoming'}">${c.status}</span>
+      ${c.removable ? `<div class="row-actions"><button class="icon-btn danger" data-delete-caregiver="${c.id}" aria-label="Remove ${c.name}">${trashIcon}</button></div>` : ''}
+    </div>`).join('');
+  document.querySelectorAll('[data-delete-caregiver]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = +b.dataset.deleteCaregiver;
+    const c = caregivers.find(x=>x.id===id);
+    if(!confirm(`Remove ${c.name} as a caregiver?`)) return;
+    try{ await apiFetch(`/api/caregivers/${id}`, { method:'DELETE' }); showToast(`${c.name} removed.`); await loadAll(); }
+    catch(err){ showToast(err.message, true); }
+  }));
+}
+document.querySelectorAll('[data-open-caregiver-modal]').forEach(b=>b.addEventListener('click',()=>{
+  document.getElementById('caregiverForm').reset();
+  openModal('caregiverModal');
+}));
+document.getElementById('caregiverForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const payload = {
+    name: document.getElementById('cName').value.trim(),
+    relation: document.getElementById('cRelation').value.trim(),
+    notifyVia: document.getElementById('cNotify').value,
+  };
+  try{
+    await apiFetch('/api/caregivers', { method:'POST', body: JSON.stringify(payload) });
+    showToast(`Invite sent to ${payload.name}.`);
+    closeModal('caregiverModal');
+    await loadAll();
+  }catch(err){ showToast(err.message, true); }
+});
+
+/* ---------------- Charts (hand-built SVG, driven by real history/stock) ---------------- */
+function buildDailyCharts(){
+  // Group history rows by log_date
+  const byDate = {};
+  history.forEach(h=>{ (byDate[h.date] ||= []).push(h); });
+  const dates = Object.keys(byDate).sort(); // ascending
+  const last7 = dates.slice(-7);
+  const last5 = dates.slice(-5);
+
+  const pctFor = d => {
+    const rows = byDate[d];
+    const taken = rows.filter(r=>r.status==='taken').length;
+    return rows.length ? Math.round((taken/rows.length)*100) : 0;
+  };
+  const shortLabel = d => { const dt = new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); };
+
+  buildBarChart(last7.length ? last7.map(d=>({label: new Date(d+'T00:00:00').toLocaleDateString('en-US',{weekday:'short'}), value: pctFor(d)})) : null);
+  buildLineChart(last5.length ? last5.map(d=>({label: shortLabel(d), value: pctFor(d)})) : null);
+}
+
+function buildBarChart(points){
+  const el = document.getElementById('barChart');
+  if(!points){ el.innerHTML = `<text x="160" y="85" text-anchor="middle" font-size="12" fill="#B4ADC6" font-family="Inter">No history yet</text>`; return; }
+  const w=320,h=170,padB=22,barW=26,gap=(w-40)/points.length;
+  let svg = '';
+  points.forEach((p,i)=>{
+    const barH = Math.max(2,(p.value/100)*(h-padB-14));
+    const x = 20 + i*gap + (gap-barW)/2;
+    const y = h-padB-barH;
+    svg += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="6" fill="#6D28D9" opacity="${0.55+ (p.value/100)*0.45}"/>`;
+    svg += `<text x="${x+barW/2}" y="${h-6}" text-anchor="middle" font-size="10" fill="#736C87" font-family="Inter">${p.label}</text>`;
+  });
+  el.innerHTML = svg;
+}
+function buildLineChart(points){
+  const el = document.getElementById('lineChart');
+  if(!points || points.length<2){ el.innerHTML = `<text x="160" y="85" text-anchor="middle" font-size="12" fill="#B4ADC6" font-family="Inter">Not enough history yet</text>`; return; }
+  const w=320,h=170,padB=22,padT=14,padL=6,padR=6;
+  const stepX = (w-padL-padR)/(points.length-1);
+  const pts = points.map((p,i)=>{
+    const x = padL + i*stepX;
+    const y = padT + (1-(p.value/100))*(h-padT-padB);
+    return [x,y];
+  });
+  const path = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const area = path + ` L${pts[pts.length-1][0]},${h-padB} L${pts[0][0]},${h-padB} Z`;
+  let svg = `<path d="${area}" fill="#6D28D9" opacity="0.08"/>`;
+  svg += `<path d="${path}" fill="none" stroke="#6D28D9" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  pts.forEach((p,i)=>{
+    svg += `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="#6D28D9" stroke-width="2.4"/>`;
+    svg += `<text x="${p[0]}" y="${h-6}" text-anchor="middle" font-size="9.5" fill="#736C87" font-family="Inter">${points[i].label}</text>`;
+  });
+  el.innerHTML = svg;
+}
+function buildPredChart(med){
+  const el = document.getElementById('predChart');
+  const w=260,h=170,padB=22,padT=10,padL=22,padR=6;
+  const days = Math.max(1, med.daysLeft);
+  const steps = Math.min(6, days+1);
+  const pts = [];
+  for(let i=0;i<steps;i++){
+    const day = Math.round((i/(steps-1))*days);
+    const remaining = Math.max(0, Math.round(med.stock * (1 - day/days)));
+    pts.push({ day, remaining });
+  }
+  const maxStock = Math.max(med.stock, 1);
+  const stepX = (w-padL-padR)/(pts.length-1 || 1);
+  const coords = pts.map((p,i)=>{
+    const x = padL + i*stepX;
+    const y = padT + (1-(p.remaining/maxStock))*(h-padT-padB);
+    return [x,y];
+  });
+  const cutIdx = Math.max(0, coords.length - 3);
+  const solid = coords.slice(0, cutIdx+1);
+  const dash = coords.slice(cutIdx);
+  const pathOf = c => c.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  let svg = `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h-padB}" stroke="#E7E3F3"/>`;
+  svg += `<line x1="${padL}" y1="${h-padB}" x2="${w-padR}" y2="${h-padB}" stroke="#E7E3F3"/>`;
+  svg += `<path d="${pathOf(solid)}" fill="none" stroke="#6D28D9" stroke-width="2.4" stroke-linecap="round"/>`;
+  svg += `<path d="${pathOf(dash)}" fill="none" stroke="#A4123F" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"/>`;
+  coords.forEach((p,i)=>{ svg += `<circle cx="${p[0]}" cy="${p[1]}" r="3.4" fill="${i>=cutIdx?'#A4123F':'#6D28D9'}"/>`; });
+  pts.forEach((p,i)=>{ svg += `<text x="${coords[i][0]}" y="${h-6}" text-anchor="middle" font-size="9.5" fill="#736C87" font-family="Inter">${p.day}</text>`; });
+  svg += `<text x="${coords[coords.length-1][0]-4}" y="${coords[coords.length-1][1]-10}" text-anchor="end" font-size="10" fill="#A4123F" font-family="Inter" font-weight="600">Runs out</text>`;
+  el.innerHTML = svg;
+}
+
+/* ---------------- Master render ---------------- */
+function renderAll(){
+  renderMedicines();
+  renderSchedule();
+  updateDoseStat();
+  renderAlerts();
+  renderStock();
+  renderHistory();
+  renderCaregivers();
+  loadDeviceKey();
+  bleAutoSync();
+}
+
+/* ================= DEVICE ================= */
+async function loadDeviceKey(){
+  try{
+    const data = await apiFetch('/api/auth/device-key');
+    document.getElementById('deviceKeyField').value = data.deviceKey || '';
+    document.getElementById('deviceKeyField').placeholder = data.deviceKey ? '' : 'No device key yet — generate one below';
+  }catch(err){ /* non-fatal, device page just stays empty */ }
+}
+document.getElementById('genDeviceKeyBtn').addEventListener('click', async ()=>{
+  if(document.getElementById('deviceKeyField').value && !confirm('This replaces your current key — any device already flashed with the old one will stop working until re-flashed. Continue?')) return;
+  try{
+    const data = await apiFetch('/api/auth/device-key', { method:'POST' });
+    document.getElementById('deviceKeyField').value = data.deviceKey;
+    showToast('New device key generated.');
+  }catch(err){ showToast(err.message, true); }
+});
+document.getElementById('copyDeviceKeyBtn').addEventListener('click', async ()=>{
+  const field = document.getElementById('deviceKeyField');
+  if(!field.value){ showToast('Generate a key first.', true); return; }
+  try{ await navigator.clipboard.writeText(field.value); showToast('Copied to clipboard.'); }
+  catch(err){ field.select(); showToast('Select and copy manually (clipboard blocked).', true); }
+});
+
+/* ================= BLUETOOTH (carry-anywhere mode) =================
+   The box keeps its own clock + schedule. This page (the "bridge"):
+   - sends it the current time and the schedule (from your medicines list)
+   - pulls the button presses it recorded while away, and uploads them to the server
+   Messages are tiny text lines, e.g. "ADD,1,0800" or "T,1,0830,20260908". */
+const BOX_UUIDS = {
+  service:'7a1c0001-6b2f-4d5e-9c3a-1f2e3d4c5b6a',
+  cmd:'7a1c0002-6b2f-4d5e-9c3a-1f2e3d4c5b6a',
+  evt:'7a1c0003-6b2f-4d5e-9c3a-1f2e3d4c5b6a',
+};
+let bleDevice = null, bleCmd = null, bleEvt = null;
+let bleBusy = false, bleSyncedSig = '', bleCollect = null, blePullAgain = false;
+let bleInfo = null;
+const bleEnc = new TextEncoder(), bleDec = new TextDecoder();
+
+function bleReady(){ return !!(bleDevice && bleDevice.gatt && bleDevice.gatt.connected && bleCmd); }
+
+function updateBleStatus(msg){
+  const badge = document.getElementById('bleBadge');
+  const text = document.getElementById('bleStatusText');
+  if(!badge || !text) return;
+  if(bleReady()){
+    badge.textContent = 'Connected';
+    badge.className = 'pill pill-taken';
+    if(msg) text.textContent = msg;
+    else if(bleInfo){
+      const clock = bleInfo.valid ? bleInfo.hhmm.slice(0,2)+':'+bleInfo.hhmm.slice(2) : 'not set';
+      text.textContent = `Box clock: ${clock} · ${bleInfo.count} dose(s) were waiting to upload.`;
+    } else text.textContent = 'Connected to your Pillbox.';
+  } else {
+    badge.textContent = 'Not connected';
+    badge.className = 'pill pill-missed';
+    text.textContent = msg || 'Turn the box on, then click Connect and pick "Pillbox" from the list.';
+  }
+}
+
+async function bleSend(text){
+  const data = bleEnc.encode(text);
+  if(bleCmd.writeValueWithResponse) await bleCmd.writeValueWithResponse(data);
+  else await bleCmd.writeValue(data);
+}
+function blePlan(){
+  return medicines.filter(m=>m.compartment>=1 && m.time).map(m=>({ c:m.compartment, hhmm:m.time.replace(':','') }));
+}
+function bleSignature(){ return JSON.stringify(blePlan()); }
+
+async function blePullEvents(){
+  bleCollect = [];
+  await bleSend('SYNC');
+}
+
+// Send time + schedule to the box, then ask for any doses it recorded while away.
+async function bleSyncSchedule(){
+  if(!bleReady() || bleBusy) return;
+  bleBusy = true;
+  try{
+    updateBleStatus('Syncing…');
+    // The box shows local clock time, so send "local epoch seconds".
+    const localEpoch = Math.floor(Date.now()/1000) - new Date().getTimezoneOffset()*60;
+    await bleSend('TIME,' + localEpoch);
+    await bleSend('CLEAR');
+    for(const d of blePlan()) await bleSend(`ADD,${d.c},${d.hhmm}`);
+    await bleSend('SAVE');
+    bleSyncedSig = bleSignature();
+    await blePullEvents();
+  }catch(err){
+    showToast('Bluetooth sync failed: ' + err.message, true);
+  }finally{
+    bleBusy = false;
+  }
+}
+function bleAutoSync(){
+  if(bleReady() && !bleBusy && bleSignature() !== bleSyncedSig) bleSyncSchedule();
+}
+
+async function finishBleSync(){
+  const events = bleCollect || [];
+  bleCollect = null;
+  if(events.length){
+    try{
+      const res = await apiFetch('/api/box/events', { method:'POST', body: JSON.stringify({ events }) });
+      await bleSend('CLEARQ');
+      showToast(`Uploaded ${res.saved} dose(s) recorded by the box.`);
+      await loadAll();
+    }catch(err){
+      showToast('Could not upload doses from the box: ' + err.message, true);
+    }
+  }
+  updateBleStatus();
+  if(blePullAgain){ blePullAgain = false; try{ await blePullEvents(); }catch(e){} }
+}
+
+function onBleNotify(e){
+  const text = bleDec.decode(e.target.value).trim();
+  if(text === 'N'){                       // the box says: a button was just pressed
+    if(bleCollect){ blePullAgain = true; return; }
+    blePullEvents().catch(()=>{});
+  } else if(text.startsWith('S,')){       // status: S,<clockValid>,<hhmm>,<waitingCount>
+    const p = text.split(',');
+    bleInfo = { valid: p[1]==='1', hhmm: p[2], count: Number(p[3]) };
+  } else if(text.startsWith('T,')){       // one recorded dose: T,<compartment>,<hhmm>,<yyyymmdd>
+    const p = text.split(',');
+    if(bleCollect && p.length === 4){
+      bleCollect.push({
+        compartment: Number(p[1]),
+        time: p[2].slice(0,2) + ':' + p[2].slice(2),
+        date: p[3].slice(0,4) + '-' + p[3].slice(4,6) + '-' + p[3].slice(6),
+      });
+    }
+  } else if(text === 'END'){
+    finishBleSync();
+  }
+}
+
+function onBleDisconnected(){
+  bleCmd = null; bleEvt = null; bleCollect = null; bleBusy = false;
+  updateBleStatus('Disconnected. The box keeps working on its own and remembers your button presses.');
+}
+
+async function bleConnect(){
+  if(!navigator.bluetooth){ showToast('Bluetooth needs Chrome or Edge (and localhost).', true); return; }
+  try{
+    updateBleStatus('Pick your Pillbox in the popup…');
+    bleDevice = await navigator.bluetooth.requestDevice({ filters:[{ services:[BOX_UUIDS.service] }] });
+    bleDevice.addEventListener('gattserverdisconnected', onBleDisconnected);
+    updateBleStatus('Connecting…');
+    const server = await bleDevice.gatt.connect();
+    const svc = await server.getPrimaryService(BOX_UUIDS.service);
+    bleCmd = await svc.getCharacteristic(BOX_UUIDS.cmd);
+    bleEvt = await svc.getCharacteristic(BOX_UUIDS.evt);
+    await bleEvt.startNotifications();
+    bleEvt.addEventListener('characteristicvaluechanged', onBleNotify);
+    showToast('Connected to Pillbox.');
+    bleSyncedSig = '';
+    await bleSyncSchedule();
+  }catch(err){
+    updateBleStatus(err.name === 'NotFoundError' ? null : 'Bluetooth: ' + err.message);
+  }
+}
+
+document.getElementById('bleConnectBtn').addEventListener('click', bleConnect);
+document.getElementById('bleSyncBtn').addEventListener('click', ()=>{
+  if(!bleReady()){ showToast('Connect to the box first.', true); return; }
+  bleSyncedSig = '';
+  bleSyncSchedule();
+});
+document.getElementById('bleDisconnectBtn').addEventListener('click', ()=>{
+  if(bleDevice && bleDevice.gatt && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+});
+document.getElementById('bleTestBtn').addEventListener('click', async ()=>{
+  if(!bleReady()){ showToast('Connect to the box first.', true); return; }
+  const n = Number(document.getElementById('bleTestComp').value) || 1;
+  try{ await bleSend('TEST,' + n); showToast(`Opening compartment ${n}…`); }
+  catch(err){ showToast(err.message, true); }
+});
+
+/* =====================================================================
+   DOSE REMINDERS — notification a few minutes before each scheduled dose
+   ===================================================================== */
+const REMIND_KEY = 'pillbox_remind_lead';
+const REMIND_SENT_KEY = 'pillbox_remind_sent';
+let swReg = null;
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(r=>{ swReg = r; }).catch(()=>{});
+}
+function remindLead(){ return Number(localStorage.getItem(REMIND_KEY)) || 5; }
+function remindSent(){
+  try{
+    const o = JSON.parse(localStorage.getItem(REMIND_SENT_KEY) || '{}');
+    const today = new Date().toDateString();
+    return o.day === today ? o : { day: today, ids: [] };
+  }catch(e){ return { day: new Date().toDateString(), ids: [] }; }
+}
+function markRemindSent(key){
+  const o = remindSent(); o.ids.push(key);
+  localStorage.setItem(REMIND_SENT_KEY, JSON.stringify(o));
+}
+function updateReminderUI(){
+  const st = document.getElementById('reminderStatus');
+  const btn = document.getElementById('reminderEnableBtn');
+  document.getElementById('reminderLead').value = String(remindLead());
+  if(!('Notification' in window)){
+    st.textContent = 'This browser does not support notifications.';
+    btn.style.display = 'none'; return;
+  }
+  if(Notification.permission === 'granted'){
+    st.textContent = `On — you'll be notified ${remindLead()} min before each dose.`;
+    btn.style.display = 'none';
+  } else if(Notification.permission === 'denied'){
+    st.textContent = 'Blocked — allow notifications for this site in your browser settings.';
+    btn.style.display = 'none';
+  } else {
+    st.textContent = 'Off — tap Enable to get a notification before each dose.';
+    btn.style.display = 'inline-flex';
+  }
+}
+async function fireNotification(title, body, tag){
+  const opts = { body, tag, requireInteraction: true, vibrate:[200,100,200] };
+  try{
+    if('Notification' in window && Notification.permission === 'granted'){
+      if(swReg && swReg.showNotification) await swReg.showNotification(title, opts);
+      else new Notification(title, opts);
+    }
+  }catch(e){ try{ new Notification(title, { body, tag }); }catch(_){} }
+  showToast(`${title} — ${body}`);
+}
+function checkReminders(){
+  if(!currentUser || !schedule.length) return;
+  const now = new Date();
+  const lead = remindLead();
+  const sent = remindSent();
+  schedule.forEach(s=>{
+    if(s.status !== 'upcoming' || !s.time) return;
+    const [hh,mm] = s.time.split(':').map(Number);
+    const due = new Date(); due.setHours(hh, mm, 0, 0);
+    const minsLeft = (due - now) / 60000;
+    const key = s.id + '@' + s.time + '@' + lead;
+    // fire once when we're inside the reminder window (lead min before ... dose time)
+    if(minsLeft <= lead && minsLeft > 0 && !sent.ids.includes(key)){
+      markRemindSent(key);
+      const m = Math.max(1, Math.ceil(minsLeft));
+      const med = medicines.find(x=>x.id===s.medicineId) || medicines.find(x=>x.name===s.med);
+      fireNotification(
+        `💊 Time for ${s.med} in ${m} min`,
+        `${s.dose} at ${to12h(s.time)}${med ? ' · Compartment ' + med.compartment : ''}`,
+        'dose-' + s.id
+      );
+    }
+  });
+}
+document.getElementById('reminderEnableBtn').addEventListener('click', async ()=>{
+  if(!('Notification' in window)) return;
+  await Notification.requestPermission();
+  updateReminderUI();
+  if(Notification.permission === 'granted') showToast('Reminders enabled.');
+});
+document.getElementById('reminderLead').addEventListener('change', e=>{
+  localStorage.setItem(REMIND_KEY, e.target.value);
+  updateReminderUI();
+  showToast(`Reminder set to ${e.target.value} min before.`);
+});
+document.getElementById('reminderTestBtn').addEventListener('click', async ()=>{
+  if('Notification' in window && Notification.permission === 'default') await Notification.requestPermission();
+  updateReminderUI();
+  fireNotification('💊 Pillbox test', 'Notifications are working!', 'pillbox-test');
+});
+updateReminderUI();
+setInterval(checkReminders, 15000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkReminders(); });
+
+</script>
+</body>
+</html>
